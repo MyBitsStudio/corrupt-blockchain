@@ -2,6 +2,7 @@ package io.mybits.utils;
 
 import io.mybits.hyperledger.block.Block;
 import io.mybits.hyperledger.contract.Contract;
+import io.mybits.hyperledger.wallet.Wallet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -9,7 +10,7 @@ import java.io.*;
 public class SerializationManager {
 
     public static final String BLOCKS = "data/master/chain/blocks/";
-    public static String WALLETS = "data/master/chain/wallet/";
+    public static final String WALLETS = "data/master/chain/wallet/";
     public static final String CONTRACTS = "data/master/chain/contract/";
 
     public static void storeSerializableClass(Serializable o, File f)
@@ -72,5 +73,27 @@ public class SerializationManager {
             }
         }
         return contract;
+    }
+
+    public static void serializeWallet(@NotNull Wallet wallet){
+        try{
+            synchronized (WALLETS){
+                storeSerializableClass(wallet, new File(WALLETS + wallet.getPublicAddress() + ".wallet"));
+            }
+        }catch(IOException i){
+            i.printStackTrace();
+        }
+    }
+
+    public static Wallet loadWallet(@NotNull File file){
+        Wallet wallet = null;
+        if(file.exists()){
+            try{
+                wallet = (Wallet) loadSerializedFile(file);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return wallet;
     }
 }

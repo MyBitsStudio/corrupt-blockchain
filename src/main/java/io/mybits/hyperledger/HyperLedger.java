@@ -6,6 +6,8 @@ import io.mybits.hyperledger.transaction.Transaction;
 import io.mybits.hyperledger.transaction.TransactionOutput;
 import io.mybits.hyperledger.wallet.Mnemonic;
 import io.mybits.hyperledger.wallet.Wallet;
+import io.mybits.hyperledger.wallet.impl.PlayerWallet;
+import io.mybits.hyperledger.wallet.impl.ServerWallet;
 import io.mybits.services.BlockGenerator;
 import io.mybits.threads.BlockchainThreads;
 import io.mybits.utils.LedgerLogs;
@@ -18,10 +20,7 @@ import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.security.Security;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -79,6 +78,17 @@ public class HyperLedger implements Serializable {
         return null;
     }
 
+    public Contract getContractByCoin(String coin){
+        synchronized (contracts) {
+            for (Contract contract : contracts) {
+                if (contract.getTokenName().equals(coin)) {
+                    return contract;
+                }
+            }
+        }
+        return null;
+    }
+
 
     public void start(){
         LedgerLogs.logBooting("Starting Hyperledger", LedgerLogs.INFO, true);
@@ -112,15 +122,26 @@ public class HyperLedger implements Serializable {
         LedgerLogs.logBooting("Background Tasks Set!", LedgerLogs.INFO, true);
     }
 
-    public Contract getContractByName(String name){
+    public Optional<Contract> getContractByName(String name){
         synchronized (contracts) {
             for (Contract contract : contracts) {
                 if (contract.getTokenName().equals(name)) {
-                    return contract;
+                    return Optional.of(contract);
                 }
             }
         }
-        return null;
+        return Optional.empty();
+    }
+
+    public Optional<Wallet> getWallet(String address){
+        synchronized (wallets) {
+            for (Wallet wallet : wallets) {
+                if (wallet.getPublicAddress().equals(address)) {
+                    return Optional.of(wallet);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     protected void startVariables() {
@@ -203,15 +224,20 @@ public class HyperLedger implements Serializable {
     }
 
     private void startWallets(){
-        File wallets = new File("data/master/wallets/");
+        File wallets = new File("data/master/chain/wallet/");
         if(!wallets.isDirectory() || Objects.requireNonNull(wallets.listFiles()).length == 0) {
             failSafe("Wallets");
             return;
         }
-//        for(File file : Objects.requireNonNull(wallets.listFiles())){
-////            Wallet wallet = SerializationManager.loadWallet(file);
-////            this.wallets.add(wallet);
-//        }
+
+        for(File file : Objects.requireNonNull(wallets.listFiles())){
+            Wallet wallet = SerializationManager.loadWallet(file);
+            if(wallet instanceof PlayerWallet playerWallet){
+                this.wallets.add(playerWallet);
+            } else if(wallet instanceof ServerWallet serverWallet){
+                this.wallets.add(serverWallet);
+            }
+        }
     }
 
     private void loadUTXOS(){
@@ -233,5 +259,22 @@ public class HyperLedger implements Serializable {
 
     private void failSafe(String info){
         LedgerLogs.logBooting("FAIL SAFE HIT!\n"+info, LedgerLogs.ERROR, true);
+    }
+
+    public void addTransactionToChain(Transaction transaction){
+        Block block = getLatestBlock();
+        CompletableFuture<Void> future =
+             CompletableFuture.runAsync(() ->
+             block.addTransaction(transaction))
+                     .thenRunAsync(() -> block.mineBlock(0))
+                     .thenRunAsync(() -> {
+                        SerializationManager.serializeBlock(block);
+                        try{
+                            SerializationManager.storeSerializableClass((Serializable) UTXOs, new File("data/master/chain/UTXO.corrupt"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }})
+                     .thenRunAsync(transaction::onComplete);
+        future.join();
     }
 }

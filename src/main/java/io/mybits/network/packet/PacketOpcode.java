@@ -12,11 +12,15 @@ public enum PacketOpcode {
     REQUEST_TCP_DENIED(new int[]{0}),
     REQUEST_UDP_DENIED(new int[]{0}),
 
-    WALLET_CREATE(new int[]{3}),
+    WALLET_CREATE(new int[]{4}),
     WALLET_RESPONSE( new int[]{3}),
     WALLET_FETCH(new int[]{6}),
     WALLET_CALL(new int[]{6}),
     WALLET_ERROR(new int[]{6}),
+
+    TRANSACTION_REQUEST(new int[]{4}),
+    TRANSACTION_RESPONSE(new int[]{3}),
+    TRANSACTION_ERROR(new int[]{3}),
 
     DENIED_PACKET(new int[]{0}),
 

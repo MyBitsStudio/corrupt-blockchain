@@ -20,7 +20,6 @@ public class Constants {
 
     public static final int[] fastPorts = new int[]{
             33306, //Wallet
-            33310 //Transactions
     };
 
     /**

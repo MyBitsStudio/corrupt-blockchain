@@ -4,13 +4,10 @@ import io.mybits.network.Network;
 import io.mybits.utils.Constants;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMsg;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -42,7 +39,7 @@ public class PacketHandler implements Serializable {
         Network network = Network.singleton();
         synchronized (this) {
             network.getThreads(Constants.QUEUE).scheduleFixedRate(() -> {
-                while(!packets.isEmpty()){
+               if(!packets.isEmpty()){
                     final Packet[] packet = {poll(), null};
                     if(packet[0] != null) {
                         System.out.println("Running queue");
@@ -92,11 +89,15 @@ public class PacketHandler implements Serializable {
                                     }
                                 }
                             }
+
+
+
                         });
+
                     }
 
                 }
-            }, 1, 1);
+            }, 100, 1);
         }
     }
 
@@ -104,24 +105,10 @@ public class PacketHandler implements Serializable {
 
     }
 
-    private void sendResponse(ZMQ.Socket socket, @NotNull Packet packet){
-        ZMsg strings = new ZMsg();
-        strings.addFirst(""+packet.returnOpCode());
-        if(packet.returnOpCode()== 1 || packet.returnOpCode() == 2){
-            strings.add(packet.security.encrypt(""+4));
-        } else {
-            strings.add(packet.security.encrypt(""+5));
-            strings.add(packet.security.encrypt(packet.security.header()));
-        }
-        strings.add(packet.security.encrypt(packet.responseMessage()));
-        strings.addLast(packet.security.encrypt(packet.security.footer()));
-        strings.send(socket);
-    }
-
     private void sendResponse(@NotNull Channel channel, @NotNull Packet packet){
         List<String> info = new ArrayList<>();
         info.add(""+packet.returnOpCode());
-        if(packet.returnOpCode()== 1 || packet.returnOpCode() == 2){
+        if(packet.returnOpCode() == 1 || packet.returnOpCode() == 2){
             info.add(packet.security.encrypt(""+4));
         } else {
             info.add(packet.security.encrypt(""+5));

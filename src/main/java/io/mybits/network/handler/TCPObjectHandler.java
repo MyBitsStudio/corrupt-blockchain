@@ -4,7 +4,9 @@ import io.mybits.network.Network;
 import io.mybits.network.packet.Packet;
 import io.mybits.network.packet.PacketOpcode;
 import io.mybits.network.packet.PacketType;
+import io.mybits.network.packet.impl.TransactionRequestPacket;
 import io.mybits.network.packet.impl.VerifyRequestPacket;
+import io.mybits.network.packet.impl.WalletCreatePacket;
 import io.mybits.utils.Constants;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -28,6 +30,7 @@ public class TCPObjectHandler extends SimpleChannelInboundHandler<Object> {
 
                 try {
                     ArrayList<String> info = (ArrayList<String>) o;
+                    System.out.println("Received object : "+o);
                     PacketOpcode opcode = PacketOpcode.getOpcode(Integer.parseInt(info.get(0)));
                     if(opcode != null){
                         switch(opcode.getOpcode()){
@@ -36,7 +39,12 @@ public class TCPObjectHandler extends SimpleChannelInboundHandler<Object> {
                                 network.getPacketHandler().addToQueue(packet);
                             }
                             case 7 -> {
-
+                                WalletCreatePacket packet = new WalletCreatePacket(opcode, PacketType.ARRAY_STRING, info, ctx.channel());
+                                network.getPacketHandler().addToQueue(packet);
+                            }
+                            case 12 -> {
+                                TransactionRequestPacket packet = new TransactionRequestPacket(opcode, PacketType.ARRAY_STRING, info, ctx.channel());
+                                network.getPacketHandler().addToQueue(packet);
                             }
                         }
                     }

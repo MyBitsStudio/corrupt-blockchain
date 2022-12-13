@@ -21,12 +21,19 @@ public class LedgerStarter {
         Security.setProperty("crypto.policy", "unlimited");
         Security.addProvider(new BouncyCastleProvider());
 
-        List<Block> blockchain = new CopyOnWriteArrayList<>();
-
         Contract[] contract = {
-                new Contract("MyNation Coin"),
-                new Contract("MyNation Diamond"),
-
+                new Contract("Block Coin"),
+                new Contract("Block Diamond"),
+                new Contract("Loyalty Points"),
+                new Contract("PVP Points"),
+                new Contract("Skilling Points"),
+                new Contract("Dungeon Points"),
+                new Contract("Slayer Points"),
+                new Contract("Vote Points"),
+                new Contract("Trivia Points"),
+                new Contract("Achievement Points"),
+                new Contract("Block Coin"),
+                new Contract("Zeal"),
         };
 
         SystemTransaction[] transactions = new SystemTransaction[contract.length];
@@ -50,17 +57,15 @@ public class LedgerStarter {
             genesisBlock.addTransaction(transaction);
         }
         genesisBlock.mineBlock(0);
-        blockchain.add(genesisBlock);
         Block newBlock = new Block(genesisBlock, 0.000000d);
         newBlock.mineBlock(0);
-        blockchain.add(newBlock);
 
         try {
-            SerializationManager.serializeBlock(genesisBlock);
-            SerializationManager.serializeBlock(newBlock);
             for(Contract contracts : contract){
                 SerializationManager.serializeContract(contracts);
             }
+            SerializationManager.serializeBlock(genesisBlock);
+            SerializationManager.serializeBlock(newBlock);
             SerializationManager.storeSerializableClass(UTXOs, new File("data/master/chain/UTXO.corrupt"));
         } catch (IOException e) {
             e.printStackTrace();

@@ -37,8 +37,11 @@ public class Launcher {
 
         network.runLater();
 
+
         LedgerLogs.logBooting("Hyperledger is running and waiting requests...", LedgerLogs.INFO, true);
 
 
     }
+
+
 }

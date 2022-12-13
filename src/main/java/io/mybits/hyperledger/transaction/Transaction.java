@@ -71,6 +71,7 @@ public abstract class Transaction implements Serializable {
        // LogHelper.logChain("Processing Transaction ", LogHelper.INFO, true);
 
         if(!verifySignature()) {
+            properties.put("status", "INSUFFICIENT");
             //LogHelper.logChain("#Transaction Signature failed to verify", LogHelper.ERROR, true);
             return false;
         }
@@ -78,13 +79,13 @@ public abstract class Transaction implements Serializable {
         //Gathers transaction inputs (Making sure they are unspent):
         for(TransactionInput i : inputs) {
             i.UTXO = HyperLedger.getUTXOs().get(i.transactionOutputId);
-
         }
 
         //LogHelper.logChain("UTXOs Inputs 1 : "+MasterChain.getUTXOs().toString(), LogHelper.DEBUG, true);
 
         //Checks if transaction is valid:
         if(getInputsValue() < 0.000005) {
+            properties.put("status", "TOO_LOW");
             //LogHelper.logChain("Transaction Inputs too small: " + getInputsValue(), LogHelper.ERROR, true);
             return false;
         }
@@ -108,10 +109,10 @@ public abstract class Transaction implements Serializable {
         //Remove transaction inputs from UTXO lists as spent:
         for(TransactionInput i : inputs) {
             if(i.UTXO == null) continue; //if Transaction can't be found skip it
-            //MasterChain.getUTXOs().remove(i.UTXO.id);
+            HyperLedger.getUTXOs().remove(i.UTXO.id);
         }
         //LogHelper.logChain("UTXO 3  : "+MasterChain.getUTXOs(), LogHelper.DEBUG, true);
-
+        properties.put("status", "FINISH");
         return true;
     }
 

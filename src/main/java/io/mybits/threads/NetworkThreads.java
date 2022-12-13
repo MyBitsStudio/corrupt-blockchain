@@ -31,7 +31,7 @@ public class NetworkThreads {
         this.executor.schedule(run, seconds, TimeUnit.SECONDS);
     }
     public void scheduleFixedRate(Runnable run, int seconds, int delay){
-        this.executor.scheduleAtFixedRate(run, delay, seconds, TimeUnit.SECONDS);
+        this.executor.scheduleAtFixedRate(run, delay, seconds, TimeUnit.MILLISECONDS);
     }
 
 

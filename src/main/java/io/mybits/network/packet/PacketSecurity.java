@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.Cipher;
-import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -23,10 +22,10 @@ public record PacketSecurity(Packet packet) {
         if (packet.invalid()) return this;
         packet.security = this;
         if (packet.getOpCode().getOpcode() == 1) {
-            network.increment();
             return this;
         } else {
             switch (packet.getType()) {
+
                 case FIXED, VARIABLE_BYTE, VARIABLE_SHORT, STRING_SHORT, STRING_LONG -> {
                     String decoded = decrypt(packet.getByteData()[0]);
                     if(decoded == null || decoded.equals("llun")) {
@@ -51,25 +50,24 @@ public record PacketSecurity(Packet packet) {
                 case ARRAY_STRING -> {
                     packet.setData(decryptedArrayList(packet.listData).toArray(new String[0]));
                     if(packet.data.length != packet.opCode.getLengths()[0]){
-                        System.out.println("Invalid Length");
+                        System.out.println("Invalid Length : "+packet.data.length);
                         packet.properties.add(PacketProperties.INVALID_LENGTH);
                     }
                     if(verifyHeader(1)){
-                        System.out.println("Error Header");
+                        System.out.println("Error Header : "+packet.data[1] +"\n Expected : "+header());
                         packet.properties.add(PacketProperties.INVALID_HEADER);
                     }
                     if(verifyFooter(packet.data.length - 1)){
-                        System.out.println("Error Footer");
+                        System.out.println("Error Footer : "+packet.data[packet.data.length - 1]+"\n Expected : "+footer());
                         packet.properties.add(PacketProperties.INVALID_FOOTER);
                     }
                 }
             }
+            network.increment();
             if(packet.invalid()){
                 System.out.println("Fatal Error");
                 packet.properties.add(PacketProperties.FATAL_ERROR);
                 return this;
-            } else {
-                network.increment();
             }
         }
         return this;

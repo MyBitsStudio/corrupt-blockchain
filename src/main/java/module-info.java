@@ -14,4 +14,9 @@ module io.mybits.hyperledger {
 
     opens io.mybits.hyperledger to javafx.fxml;
     exports io.mybits.hyperledger;
+    exports io.mybits.hyperledger.contract;
+    exports io.mybits.threads;
+    exports io.mybits.hyperledger.block;
+    exports io.mybits.hyperledger.transaction;
+    exports io.mybits.hyperledger.wallet;
 }

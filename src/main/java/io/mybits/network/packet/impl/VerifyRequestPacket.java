@@ -64,7 +64,7 @@ public class VerifyRequestPacket extends Packet {
 
     @Override
     public String responseMessage() {
-        return serial+":"+ new BigInteger(""+Network.singleton().getCount()).toString(6)+":"+superSerial;
+        return serial+":"+ Network.singleton().radix()+":"+superSerial;
     }
 
     @Override
